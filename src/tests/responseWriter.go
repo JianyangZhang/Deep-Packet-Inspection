@@ -36,7 +36,7 @@ func handlerImage(w http.ResponseWriter, r *http.Request) {
 	w.Write(image)
 }
 
-func HttpPushTest() {
+func ResponseWriterTest() {
 	checkPushContent()
 	http.HandleFunc("/", handlerHtml)
 	http.HandleFunc("/image", handlerImage)
