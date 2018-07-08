@@ -1,4 +1,8 @@
-package tests
+/**
+HTTP/2 的服务器推送功能测试，暂时没什么用
+*/
+
+package utils
 
 import (
 	"fmt"

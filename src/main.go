@@ -1,12 +1,12 @@
 package main
 
-import "./tests"
+import "./utils"
 
 func main() {
 
-	// tests.GetDevices()
-	// tests.OfflinePacketsTest(tests.OFFLINE_PCAP_PATH, 1)
-	// tests.LivePacketsTest(tests.VPN_ADAPTER_PATH, 5, 0)
-	// tests.ResponseWriterTest()
-	tests.TryPush()
+	utils.GetDevices()
+	// utils.OfflinePacketsTest(tests.OFFLINE_PCAP_PATH, 1)
+	// utils.LivePacketsTest(tests.VPN_ADAPTER_PATH, 5, 0)
+	// utils.ResponseWriterTest()
+	// utils.TryPush()
 }
