@@ -1,70 +1,60 @@
-/**
-
- */
 package utils
 
 import (
 	"fmt"
 	"log"
-	"net"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	"github.com/google/gopacket/pcap"
 )
 
-const PROTOCOL_IPV4_TCP string = "ip4:tcp"
-
-/*
-	推送报文
-*/
-func PushPacket(packet gopacket.SerializeBuffer, ip_dst string) {
-	// 推送
-	dstIPaddr := net.IPAddr{
-		IP: net.ParseIP(ip_dst),
-	}
-	fmt.Println("\n报文创建成功, 开始推送...\n ")
-	connection, err := net.ListenPacket(PROTOCOL_IPV4_TCP, "192.168.122.1")
-	if err != nil {
+/* 将byte array格式的报文推送给指定的设备 */
+func SendPacket(deviceName string, data []byte) {
+	if handle, err := pcap.OpenLive(deviceName, 3000, true, pcap.BlockForever); err != nil { // 得到设备的handle
 		panic(err)
+	} else {
+		// 发送报文
+		err = handle.WritePacketData(data)
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			fmt.Println("=============> 报文已推送")
+		}
 	}
-	_, err = connection.WriteTo(packet.Bytes(), &dstIPaddr) // 为什么要传入指针
-	if err != nil {
-		panic(err)
-	}
-	log.Print("发送成功!\n")
 }
 
-/*
-	创建报文
-*/
-func InitPacket(ip_src string, port_src int, ip_dst string, port_dst int) (gopacket.SerializeBuffer, error) {
-	srcIP := net.ParseIP(ip_src)
-	dstIP := net.ParseIP(ip_dst)
-	ipLayer := layers.IPv4{
-		SrcIP:    srcIP,
-		DstIP:    dstIP,
-		Protocol: layers.IPProtocolTCP,
-	}
-	tcpLayer := layers.TCP{
-		SrcPort: layers.TCPPort(port_src),
-		DstPort: layers.TCPPort(port_dst),
-		SYN:     true,
-	}
-	tcpLayer.SetNetworkLayerForChecksum(&ipLayer)
-	packet := gopacket.NewSerializeBuffer()
-	opts := gopacket.SerializeOptions{
+/* 创建byte array格式的完整报文 */
+func CreatePacket(src_mac []byte, dst_mac []byte, src_ip []byte, dst_ip []byte, src_port int, dst_port int, payload []byte) []byte {
+
+	// 准备报文内容
+	buffer := gopacket.NewSerializeBuffer()
+	options := gopacket.SerializeOptions{
 		FixLengths:       true,
 		ComputeChecksums: true,
 	}
-	err := gopacket.SerializeLayers(packet, opts, &ipLayer, &tcpLayer)
-	return packet, err
-}
-
-/* 测试 */
-func TryPush() {
-	if packet, err := InitPacket("127.0.0.1", 80, "127.0.0.1", 80); err != nil {
-		panic(err)
-	} else {
-		PushPacket(packet, "127.0.0.1")
+	/*
+			ethernetLayer := &layers.Ethernet{
+				SrcMAC: src_mac,
+				DstMAC: dst_mac,
+		    }
+	*/
+	ipLayer := &layers.IPv4{
+		SrcIP: src_ip,
+		DstIP: dst_ip,
 	}
+	tcpLayer := &layers.TCP{
+		SrcPort: layers.TCPPort(src_port),
+		DstPort: layers.TCPPort(dst_port),
+	}
+	gopacket.SerializeLayers(buffer, options,
+		// ethernetLayer,
+		ipLayer,
+		tcpLayer,
+		gopacket.Payload(payload),
+	)
+	fmt.Println("=============> 报文创建成功")
+	// 将报文转为byte数组
+	return buffer.Bytes()
+
 }
