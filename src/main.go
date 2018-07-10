@@ -10,7 +10,14 @@ import (
 )
 
 func main() {
-	// utils.GetDevices()
+	go func() {
+		utils.Receiver()
+	}()
+	utils.Sender()
+
+/*--------------- 测试 ---------------*/
+func PacketPushTest() {
+	utils.GetDevices()
 
 	pChan := make(chan utils.PacketInfo, 100) // 数据包channel
 
@@ -26,7 +33,7 @@ func main() {
 
 	// 开始抓包
 	go func() {
-		utils.GetLivePackets(utils.VPN_ADAPTER_NAME, pChan, utils.TCP_80)
+		utils.GetLivePackets(utils.CENTOS_ADAPTER_NAME, pChan, utils.TCP_80)
 	}()
 
 	// 推送一个包
@@ -41,9 +48,9 @@ func main() {
 			[]byte{42, 236, 9, 26},
 			999,
 			80,
-			[]byte{10, 20, 30})
+			[]byte{5, 8, 10})
 		// 发送报文
-		utils.SendPacket(utils.VPN_ADAPTER_NAME, newPacket)
+		utils.SendPacket(utils.CENTOS_ADAPTER_NAME, newPacket)
 	}()
 
 	// 打印抓到的包

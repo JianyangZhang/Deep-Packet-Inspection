@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"log"
+	"net"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -33,22 +34,20 @@ func CreatePacket(src_mac []byte, dst_mac []byte, src_ip []byte, dst_ip []byte, 
 		FixLengths:       true,
 		ComputeChecksums: true,
 	}
-	/*
-			ethernetLayer := &layers.Ethernet{
-				SrcMAC: src_mac,
-				DstMAC: dst_mac,
-		    }
-	*/
+	ethernetLayer := &layers.Ethernet{
+		SrcMAC: net.HardwareAddr{src_mac[0], src_mac[1], src_mac[2], src_mac[3], src_mac[4], src_mac[5]},
+		DstMAC: net.HardwareAddr{dst_mac[0], dst_mac[1], dst_mac[2], dst_mac[3], dst_mac[4], dst_mac[5]},
+	}
 	ipLayer := &layers.IPv4{
-		SrcIP: src_ip,
-		DstIP: dst_ip,
+		SrcIP: net.IP{src_ip[0], src_ip[1], src_ip[2], src_ip[3]},
+		DstIP: net.IP{dst_ip[0], dst_ip[1], dst_ip[2], dst_ip[3]},
 	}
 	tcpLayer := &layers.TCP{
 		SrcPort: layers.TCPPort(src_port),
 		DstPort: layers.TCPPort(dst_port),
 	}
 	gopacket.SerializeLayers(buffer, options,
-		// ethernetLayer,
+		ethernetLayer,
 		ipLayer,
 		tcpLayer,
 		gopacket.Payload(payload),
