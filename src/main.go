@@ -11,9 +11,11 @@ import (
 
 func main() {
 	go func() {
-		utils.Receiver()
+		utils.Sender()
+
 	}()
-	utils.Sender()
+	utils.Receiver()
+}
 
 /*--------------- 测试 ---------------*/
 func PacketPushTest() {

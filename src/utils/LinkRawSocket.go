@@ -11,7 +11,7 @@ import (
 	"os"
 	"syscall"
 
-	"../ipv4"
+	"golang.org/x/net/ipv4"
 )
 
 func Receiver() {
@@ -28,8 +28,6 @@ func Receiver() {
 			fmt.Println(err)
 		}
 		fmt.Printf("% x\n", buf[:numRead]) // x，将整数转换成十六进制表示，并将其格式化到指定位置
-		fmt.Printf("====================")
-		fmt.Printf(string(buf[:numRead]))
 	}
 }
 
@@ -46,6 +44,8 @@ func Sender() {
 	err = syscall.Sendto(fd, packet, 0, &addr)
 	if err != nil {
 		log.Fatal("Sendto:", err)
+	} else {
+		fmt.Println("Raw Packet 已发送")
 	}
 }
 
