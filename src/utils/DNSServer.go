@@ -1,3 +1,7 @@
+/*
+	一个简单的DNS服务器。所有收到的dns请求全部回应指定的ip
+	(从DNS层无法获取源ip、源mac信息。只能先抓包，然后根据mac地址分流给不同的name server了？)
+*/
 package utils
 
 import (
@@ -11,6 +15,8 @@ import (
 	dnss "github.com/miekg/dns"
 )
 
+const REDIRECTED_SERVER_IP string = "192.168.8.8" // 要回应的ip地址
+
 var domainsToAddresses = map[string]string{
 /*
 	"baidu.com.": "1.2.3.4",
@@ -18,7 +24,7 @@ var domainsToAddresses = map[string]string{
 */
 }
 
-func (this *handler) serveDNS(w dnss.ResponseWriter, r *dnss.Msg) {
+func (this *handler) ServeDNS(w dnss.ResponseWriter, r *dnss.Msg) {
 	msg := dnss.Msg{}
 	msg.SetReply(r)
 	switch r.Question[0].Qtype {
@@ -36,7 +42,7 @@ func (this *handler) serveDNS(w dnss.ResponseWriter, r *dnss.Msg) {
 		*/
 		msg.Answer = append(msg.Answer, &dnss.A{
 			Hdr: dnss.RR_Header{Name: domain, Rrtype: dnss.TypeA, Class: dnss.ClassINET, Ttl: 60},
-			A:   net.ParseIP("192.168.8.8"),
+			A:   net.ParseIP("REDIRECTED_SERVER_IP"),
 		})
 	}
 	w.WriteMsg(&msg)
