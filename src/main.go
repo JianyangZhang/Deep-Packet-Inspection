@@ -10,11 +10,11 @@ import (
 )
 
 func main() {
-	utils.StartDNSServer()
+	DNSServerTest()
 }
 
 /*--------------- 测试 ---------------*/
-/*
+
 func LinkRawSocketTest() {
 	go func() {
 		utils.Sender()
@@ -22,9 +22,13 @@ func LinkRawSocketTest() {
 	}()
 	utils.Receiver()
 }
-*/
+
+func DNSServerTest() {
+	utils.StartDNSServer(3535)
+}
+
 func PacketPushTest() {
-	// utils.GetDevices()
+	utils.GetDevices()
 
 	pChan := make(chan utils.PacketInfo, 100) // 数据包channel
 

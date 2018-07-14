@@ -44,8 +44,9 @@ func (this *handler) ServeDNS(w dnss.ResponseWriter, r *dnss.Msg) {
 
 type handler struct{}
 
-func StartDNSServer() {
-	srv := &dnss.Server{Addr: ":" + strconv.Itoa(1234), Net: "udp"}
+/* 参数port: DNS服务器的端口号 (35被真实DNS服务占用) */
+func StartDNSServer(port int) {
+	srv := &dnss.Server{Addr: ":" + strconv.Itoa(port), Net: "udp"}
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
@@ -59,7 +60,7 @@ func StartDNSServer() {
 	srv.Handler = &handler{}
 	srv.NotifyStartedFunc = func() {
 		fmt.Println("DNS服务器启动成功...")
-		fmt.Println("测试请执行命令: dig @localhost -p 1234 baidu.com")
+		fmt.Println("测试执行命令: dig @localhost -p", port, "baidu.com")
 	}
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalf("DNS服务器启动失败... %s\n", err.Error())
