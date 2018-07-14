@@ -18,7 +18,7 @@ var domainsToAddresses = map[string]string{
 */
 }
 
-func (this *handler) ServeDNS(w dnss.ResponseWriter, r *dnss.Msg) {
+func (this *handler) serveDNS(w dnss.ResponseWriter, r *dnss.Msg) {
 	msg := dnss.Msg{}
 	msg.SetReply(r)
 	switch r.Question[0].Qtype {
