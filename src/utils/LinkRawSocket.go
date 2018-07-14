@@ -3,7 +3,7 @@ package utils
 /*
 	不同操作系统下的syscall库不一样，windows版本无法编译
 */
-
+/*
 import (
 	"fmt"
 	"log"
@@ -38,7 +38,7 @@ func Sender() {
 	}
 	addr := syscall.SockaddrInet4{
 		Port: 0,
-		Addr: [4]byte{127, 0, 0, 1},
+		Addr: [4]byte{127, 8, 8, 8},
 	}
 	packet := createPacket()
 	err = syscall.Sendto(fd, packet, 0, &addr)
@@ -72,7 +72,7 @@ func createPacket() []byte {
 		TotalLen: 20 + 10, // 20 bytes for IP, 10 for ICMP
 		TTL:      64,
 		Protocol: 1, // ICMP
-		Dst:      net.IPv4(127, 0, 0, 1),
+		Dst:      net.IPv4(127, 5, 5, 5),
 		// ID, Src and Checksum will be set for us by the kernel
 	}
 	out, err := h.Marshal()
@@ -93,3 +93,4 @@ func csum(b []byte) uint16 {
 	s = s + s>>16
 	return uint16(^s)
 }
+*/
