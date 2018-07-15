@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/google/gopacket"
@@ -29,8 +30,8 @@ func SendPacket(deviceName string, data []byte) {
 	}
 }
 
-/* 创建byte array格式的完整UDP报文 */
-func CreateUDPPacket(src_mac string, dst_mac string, src_ip string, dst_ip string, src_port int, dst_port int, payload []byte) []byte {
+/* 创建byte array格式的完整报文 */
+func CreatePacket(protocal string, src_mac string, dst_mac string, src_ip string, dst_ip string, src_port int, dst_port int, payload []byte) []byte {
 
 	// 准备报文内容
 	buffer := gopacket.NewSerializeBuffer()
@@ -38,12 +39,14 @@ func CreateUDPPacket(src_mac string, dst_mac string, src_ip string, dst_ip strin
 		FixLengths:       true,
 		ComputeChecksums: true,
 	}
-
+	tcpLayer := &layers.TCP{
+		SrcPort: layers.TCPPort(src_port),
+		DstPort: layers.TCPPort(dst_port),
+	}
 	udpLayer := &layers.UDP{
 		SrcPort: layers.UDPPort(src_port),
 		DstPort: layers.UDPPort(dst_port),
 	}
-
 	ipLayer := &layers.IPv4{
 		Version:    4,
 		IHL:        5,
@@ -52,7 +55,6 @@ func CreateUDPPacket(src_mac string, dst_mac string, src_ip string, dst_ip strin
 		Flags:      0,
 		FragOffset: 0,
 		TTL:        255,
-		Protocol:   layers.IPProtocolUDP,
 		SrcIP:      net.ParseIP(src_ip),
 		DstIP:      net.ParseIP(dst_ip),
 	}
@@ -68,16 +70,33 @@ func CreateUDPPacket(src_mac string, dst_mac string, src_ip string, dst_ip strin
 	ethernetLayer := &layers.Ethernet{
 		SrcMAC:       src_mac_ready,
 		DstMAC:       dst_mac_ready,
-		EthernetType: 0x800,
+		EthernetType: layers.EthernetTypeIPv4,
 	}
-	udpLayer.SetNetworkLayerForChecksum(ipLayer)
-	gopacket.SerializeLayers(buffer, options,
-		ethernetLayer,
-		ipLayer,
-		udpLayer,
-		gopacket.Payload(payload),
-	)
-	fmt.Println("=============> UDP报文创建成功")
+
+	if "udp" == strings.ToLower(protocal) {
+		ipLayer.Protocol = layers.IPProtocolUDP
+		udpLayer.SetNetworkLayerForChecksum(ipLayer)
+		gopacket.SerializeLayers(buffer, options,
+			ethernetLayer,
+			ipLayer,
+			udpLayer,
+			gopacket.Payload(payload),
+		)
+		fmt.Println("=============> UDP报文创建成功")
+	} else if "tcp" == strings.ToLower(protocal) {
+		ipLayer.Protocol = layers.IPProtocolTCP
+		tcpLayer.SetNetworkLayerForChecksum(ipLayer)
+		gopacket.SerializeLayers(buffer, options,
+			ethernetLayer,
+			ipLayer,
+			tcpLayer,
+			gopacket.Payload(payload),
+		)
+		fmt.Println("=============> TCP报文创建成功")
+	} else {
+		panic("protocal must be 'tcp' or 'udp'")
+	}
+
 	// 将报文转为byte数组
 	return buffer.Bytes()
 }

@@ -18,6 +18,7 @@ const CENTOS_ADAPTER_NAME string = "ens33"
 const WIN_LOOPBACK_ADAPTER_NAME string = "\\Device\\NPF_{EF48B70C-A89C-4E75-BBDD-B03A3ACCFC9E}"
 const LINUX_LOOPBACK_ADAPTER_NAME string = "lo"
 const FILTER_TCP_80 string = "tcp and port 80"
+const FILTER_UDP_53 string = "udp and port 53"
 const FILTER_ALL string = ""
 
 /*
@@ -36,7 +37,11 @@ func GetLivePackets(deviceName string, packetChannel chan PacketInfo, filter str
 		packetSource := gopacket.NewPacketSource(handle, handle.LinkType()) // 得到数据源
 		fmt.Println("开始抓包...")
 		for packet := range packetSource.Packets() {
-			fmt.Println("\n抓取到一个数据包")
+			if filter != "" {
+				fmt.Println("\n抓取到一个", filter, "的数据包，等待解析")
+			} else {
+				fmt.Println("\n抓取到一个数据包，等待解析")
+			}
 			packetChannel <- decodePacket(packet)
 		}
 	}
@@ -87,9 +92,12 @@ func decodePacket(packet gopacket.Packet) PacketInfo {
 	if dnsLayer != nil {
 		dns, _ := dnsLayer.(*layers.DNS)
 		rst.IsDNS = true
-		rst.Question = string(dns.Questions[0].Name)
-		rst.Answer = string(dns.Answers[0].Name)
-
+		if len(dns.Questions) > 0 {
+			rst.Question = string(dns.Questions[0].Name)
+		}
+		if len(dns.Answers) > 0 {
+			rst.Answer = dns.Answers[0].IP.String()
+		}
 	} else {
 		rst.IsDNS = false
 	}
@@ -129,9 +137,10 @@ func (this PacketInfo) PrintAll() {
 	fmt.Println("报文序列:", fmt.Sprint(this.Sequence))
 	// fmt.Println("Payload内容:", this.Payload)
 	if this.IsDNS {
-		fmt.Println("DNS问题:", this.Question)
-		fmt.Println("DNS回答:", this.Answer)
+		fmt.Println("DNS查询:", this.Question)
+		fmt.Println("DNS返回:", this.Answer)
 	}
+	fmt.Println("----------解析完成----------\n ")
 }
 
 /*

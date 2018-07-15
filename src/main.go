@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -10,6 +11,8 @@ import (
 )
 
 func main() {
+	// LinkRawSocketTest()
+	// DNSServerTest()
 	PacketTransferTest()
 }
 
@@ -28,13 +31,25 @@ func LinkRawSocketTest() {
 
 // DNSServer.go 测试
 func DNSServerTest() {
-	utils.StartDNSServer(3535)
+	_port := flag.Int("p", 3535, "服务器端口")
+	flag.Parse()
+	port := *_port
+	utils.StartDNSServer(port)
 }
 
 // PacketCapter.go PacketSender.go 测试
 func PacketTransferTest() {
+	_protocal := flag.String("p", "tcp", "协议类型")
+	_device := flag.String("d", utils.VPN_ADAPTER_NAME, "网络适配器名称")
+	_filter := flag.String("f", "", "报文过滤")
+	flag.Parse()
+	protocal := *_protocal
+	device := *_device
+	filter := *_filter
+	if filter != "" {
+		fmt.Println("已设置过滤器:", filter)
+	}
 	// utils.GetDevices()
-
 	pChan := make(chan utils.PacketInfo, 100) // 数据包channel
 
 	// ctrl-c 关闭channel, 结束程序
@@ -49,7 +64,7 @@ func PacketTransferTest() {
 
 	// 开始抓包
 	go func() {
-		utils.GetLivePackets(utils.LINUX_LOOPBACK_ADAPTER_NAME, pChan, utils.FILTER_ALL)
+		utils.GetLivePackets(device, pChan, filter)
 	}()
 
 	// 推送一个包
@@ -57,7 +72,8 @@ func PacketTransferTest() {
 		time.Sleep(time.Second)
 		// 创建一个报文
 		// 顺序 src_mac string, dst_mac string, src_ip string, dst_ip string, src_port int, dst_port int, payload []byte
-		newPacket := utils.CreateUDPPacket(
+		newPacket := utils.CreatePacket(
+			protocal,
 			"11:22:33:44:55:66",
 			"66:55:44:33:22:11",
 			"192.166.6.6",
@@ -66,7 +82,7 @@ func PacketTransferTest() {
 			80,
 			[]byte{5, 8, 10})
 		// 发送报文
-		utils.SendPacket(utils.LINUX_LOOPBACK_ADAPTER_NAME, newPacket)
+		utils.SendPacket(device, newPacket)
 	}()
 
 	// 打印抓到的包
