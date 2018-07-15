@@ -1,6 +1,5 @@
 /*
 	一个简单的DNS服务器。所有收到的dns请求全部回应指定的ip
-	(从DNS层无法获取源ip、源mac信息。只能先抓包，然后根据mac地址分流给不同的name server了？)
 */
 package utils
 

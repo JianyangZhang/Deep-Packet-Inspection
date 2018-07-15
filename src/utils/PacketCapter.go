@@ -1,3 +1,4 @@
+/* 抓包 */
 package utils
 
 import (
@@ -11,11 +12,13 @@ import (
 )
 
 const OFFLINE_PCAP_PATH string = "../samples/test_ethernet.pcap"
-
 const ADAPTER_NAME string = "eth0"
 const VPN_ADAPTER_NAME string = "\\Device\\NPF_{3687A031-BD34-4472-ACCA-29349877F279}"
 const CENTOS_ADAPTER_NAME string = "ens33"
-const TCP_80 string = "tcp and port 80"
+const WIN_LOOPBACK_ADAPTER_NAME string = "\\Device\\NPF_{EF48B70C-A89C-4E75-BBDD-B03A3ACCFC9E}"
+const LINUX_LOOPBACK_ADAPTER_NAME string = "lo"
+const FILTER_TCP_80 string = "tcp and port 80"
+const FILTER_ALL string = ""
 
 /*
 	抓取 TCP:80 数据包
@@ -25,6 +28,7 @@ func GetLivePackets(deviceName string, packetChannel chan PacketInfo, filter str
 	if handle, err := pcap.OpenLive(deviceName, 3000, true, pcap.BlockForever); err != nil { // 得到设备的handle
 		panic(err)
 	} else {
+		defer handle.Close()
 		err = handle.SetBPFFilter(filter) // 设置过滤器
 		if err != nil {
 			panic(err)
@@ -42,7 +46,7 @@ func GetLivePackets(deviceName string, packetChannel chan PacketInfo, filter str
 	解析一个数据包，将结果传入PacketInfo并返回
 */
 func decodePacket(packet gopacket.Packet) PacketInfo {
-	var rst PacketInfo = PacketInfo{Layers: nil, Protocal: "", EthType: "", SrcMac: "", DstMac: "", SrcIP: "", DstIP: "", SrcPort: "", DstPort: "", Sequence: 0, Payload: ""}
+	var rst PacketInfo
 	var rstLayers []string
 	for _, layer := range packet.Layers() {
 		rstLayers = append(rstLayers, layer.LayerType().String())
@@ -51,6 +55,8 @@ func decodePacket(packet gopacket.Packet) PacketInfo {
 	ethernetLayer := packet.Layer(layers.LayerTypeEthernet)
 	ipLayer := packet.Layer(layers.LayerTypeIPv4)
 	tcpLayer := packet.Layer(layers.LayerTypeTCP)
+	udpLayer := packet.Layer(layers.LayerTypeUDP)
+	dnsLayer := packet.Layer(layers.LayerTypeDNS)
 	applicationLayer := packet.ApplicationLayer()
 
 	if ethernetLayer != nil {
@@ -72,8 +78,21 @@ func decodePacket(packet gopacket.Packet) PacketInfo {
 		rst.SrcPort = tcp.SrcPort.String()
 		rst.DstPort = tcp.DstPort.String()
 		rst.Sequence = tcp.Seq
+	} else if udpLayer != nil {
+		udp, _ := udpLayer.(*layers.UDP)
+		rst.SrcPort = udp.SrcPort.String()
+		rst.DstPort = udp.DstPort.String()
 	}
 
+	if dnsLayer != nil {
+		dns, _ := dnsLayer.(*layers.DNS)
+		rst.IsDNS = true
+		rst.Question = string(dns.Questions[0].Name)
+		rst.Answer = string(dns.Answers[0].Name)
+
+	} else {
+		rst.IsDNS = false
+	}
 	if applicationLayer != nil {
 		rst.Payload = string(applicationLayer.Payload())
 	}
@@ -93,6 +112,9 @@ type PacketInfo struct {
 	DstPort  string
 	Sequence uint32
 	Payload  string
+	IsDNS    bool
+	Question string
+	Answer   string
 }
 
 func (this PacketInfo) PrintAll() {
@@ -106,6 +128,10 @@ func (this PacketInfo) PrintAll() {
 	fmt.Println("端口:", this.SrcPort, "=>", this.DstPort)
 	fmt.Println("报文序列:", fmt.Sprint(this.Sequence))
 	// fmt.Println("Payload内容:", this.Payload)
+	if this.IsDNS {
+		fmt.Println("DNS问题:", this.Question)
+		fmt.Println("DNS回答:", this.Answer)
+	}
 }
 
 /*
@@ -225,7 +251,7 @@ func LivePacketsTest(deviceName string, amount int, mode int) {
 // 简单分析一个包的信息：每一层的名称、来源、目标
 // 参数 packetData: 数据包原始数据; flag: 是否打印数据包信息
 func handlePacket(packetData []byte, print bool) PacketInfo {
-	var rst PacketInfo = PacketInfo{Layers: nil, Protocal: "", EthType: "", SrcMac: "", DstMac: "", SrcIP: "", DstIP: "", SrcPort: "", DstPort: "", Sequence: 0, Payload: ""}
+	var rst PacketInfo
 	var rstLayers []string
 	decodedLayers := make([]gopacket.LayerType, 0, 10)
 	if err := parser.DecodeLayers(packetData, &decodedLayers); err != nil {
