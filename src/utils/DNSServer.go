@@ -30,15 +30,6 @@ func (this *handler) ServeDNS(w dnss.ResponseWriter, r *dnss.Msg) {
 	case dnss.TypeA:
 		msg.Authoritative = true
 		domain := msg.Question[0].Name
-		/*
-			address, ok := domainsToAddresses[domain]
-			if ok {
-				msg.Answer = append(msg.Answer, &dnss.A{
-					Hdr: dnss.RR_Header{Name: domain, Rrtype: dnss.TypeA, Class: dnss.ClassINET, Ttl: 60},
-					A:   net.ParseIP(address),
-				})
-			}
-		*/
 		msg.Answer = append(msg.Answer, &dnss.A{
 			Hdr: dnss.RR_Header{Name: domain, Rrtype: dnss.TypeA, Class: dnss.ClassINET, Ttl: 60},
 			A:   net.ParseIP("REDIRECTED_SERVER_IP"),

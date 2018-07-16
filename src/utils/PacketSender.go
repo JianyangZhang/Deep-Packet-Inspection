@@ -11,6 +11,7 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
+	dnss "github.com/miekg/dns"
 )
 
 /* 将byte array格式的报文推送给指定的设备 */
@@ -99,4 +100,30 @@ func CreatePacket(protocal string, src_mac string, dst_mac string, src_ip string
 
 	// 将报文转为byte数组
 	return buffer.Bytes()
+}
+
+/* 传入一个gopacket.Packet类型的DNS包, 返回其响应报文 */
+func CreateDNSResponse(packet gopacket.Packet) []byte {
+	originDNS := packet.Data()
+	request := &dnss.Msg{}
+	response := &dnss.Msg{}
+
+	request.Unpack(originDNS)
+	response.SetReply(request)
+	
+		switch request.Question[0].Qtype {
+		case dnss.TypeA:
+			response.Authoritative = true
+			domain := response.Question[0].Name
+			response.Answer = append(response.Answer, &dnss.A{
+				Hdr: dnss.RR_Header{Name: domain, Rrtype: dnss.TypeA, Class: dnss.ClassINET, Ttl: 60},
+				A:   net.ParseIP("192.168.8.8"),
+			})
+		}
+	
+	rstDNS, err := response.Pack()
+	if err != nil {
+		panic(err)
+	}
+	return rstDNS
 }

@@ -42,7 +42,7 @@ func GetLivePackets(deviceName string, packetChannel chan PacketInfo, filter str
 			} else {
 				fmt.Println("\n抓取到一个数据包，等待解析")
 			}
-			packetChannel <- decodePacket(packet)
+			packetChannel <- DecodePacket(packet)
 		}
 	}
 }
@@ -50,7 +50,7 @@ func GetLivePackets(deviceName string, packetChannel chan PacketInfo, filter str
 /*
 	解析一个数据包，将结果传入PacketInfo并返回
 */
-func decodePacket(packet gopacket.Packet) PacketInfo {
+func DecodePacket(packet gopacket.Packet) PacketInfo {
 	var rst PacketInfo
 	var rstLayers []string
 	for _, layer := range packet.Layers() {
@@ -180,6 +180,8 @@ type Device struct {
 }
 
 //----------------------------------------- 测试 --------------------------------------------
+//----------------------------------------- 测试 --------------------------------------------
+//----------------------------------------- 测试 --------------------------------------------
 
 var eth layers.Ethernet
 var ip4 layers.IPv4
@@ -308,4 +310,28 @@ func handlePacket(packetData []byte, print bool) PacketInfo {
 	fmt.Println()
 	rst.Layers = rstLayers
 	return rst
+}
+
+/* 得到并返回一个数据包(测试用) */
+func GetOneLivePacket(deviceName string, filter string) gopacket.Packet {
+	if handle, err := pcap.OpenLive(deviceName, 3000, true, pcap.BlockForever); err != nil { // 得到设备的handle
+		panic(err)
+	} else {
+		defer handle.Close()
+		err = handle.SetBPFFilter(filter) // 设置过滤器
+		if err != nil {
+			panic(err)
+		}
+		packetSource := gopacket.NewPacketSource(handle, handle.LinkType()) // 得到数据源
+		fmt.Println("开始抓包...")
+		for packet := range packetSource.Packets() {
+			if filter != "" {
+				fmt.Println("\n抓取到一个", filter, "的数据包")
+			} else {
+				fmt.Println("\n抓取到一个数据包")
+			}
+			return packet
+		}
+	}
+	return nil
 }
