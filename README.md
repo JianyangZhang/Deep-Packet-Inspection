@@ -6,9 +6,9 @@ https://studygolang.com/articles/12116<br>
 
 编译提示缺少类库，直接 `go get 类库url` 即可
 
-功能测试:
-抓取、解析数据报
-创建、发送TCP或UDP报文
-创建、发送DNS报文
-DNS服务器（for captive portal）
-HTTP/2推送服务器
+功能测试:<br>
+抓取、解析数据报<br>
+创建、发送TCP或UDP报文<br>
+创建、发送DNS报文<br>
+DNS服务器（for captive portal）<br>
+HTTP/2推送服务器<br>
