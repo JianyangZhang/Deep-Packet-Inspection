@@ -11,7 +11,6 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
-	dnss "github.com/miekg/dns"
 )
 
 /* 将byte array格式的报文推送给指定的设备 */
@@ -103,27 +102,36 @@ func CreatePacket(protocal string, src_mac string, dst_mac string, src_ip string
 }
 
 /* 传入一个gopacket.Packet类型的DNS包, 返回其响应报文 */
-func CreateDNSResponse(packet gopacket.Packet) []byte {
-	originDNS := packet.Data()
-	request := &dnss.Msg{}
-	response := &dnss.Msg{}
-
-	request.Unpack(originDNS)
-	response.SetReply(request)
-	
-		switch request.Question[0].Qtype {
-		case dnss.TypeA:
-			response.Authoritative = true
-			domain := response.Question[0].Name
-			response.Answer = append(response.Answer, &dnss.A{
-				Hdr: dnss.RR_Header{Name: domain, Rrtype: dnss.TypeA, Class: dnss.ClassINET, Ttl: 60},
-				A:   net.ParseIP("192.168.8.8"),
-			})
-		}
-	
-	rstDNS, err := response.Pack()
-	if err != nil {
-		panic(err)
+func CreateDNSResponse(packet gopacket.Packet, ip string) []byte {
+	buffer := gopacket.NewSerializeBuffer()
+	options := gopacket.SerializeOptions{
+		FixLengths:       true,
+		ComputeChecksums: true,
 	}
-	return rstDNS
+
+	request := packet.Layer(layers.LayerTypeDNS).(*layers.DNS)
+	response := &layers.DNS{
+		ID:           request.ID, // 必须与请求报文一致
+		QR:           true,       // false查询; true响应
+		AA:           request.AA,
+		TC:           request.TC,
+		RD:           request.RD,
+		RA:           request.RA,
+		ResponseCode: layers.DNSResponseCodeNoErr,
+		QDCount:      1,
+		ANCount:      1,
+		NSCount:      0,
+		ARCount:      0,
+		Questions:    request.Questions,
+		Answers: append(request.Answers, layers.DNSResourceRecord{
+			Name:  request.Questions[0].Name,
+			Type:  layers.DNSTypeA,
+			Class: layers.DNSClassIN,
+			TTL:   60,
+			IP:    net.ParseIP(ip),
+		}),
+	}
+	gopacket.SerializeLayers(buffer, options, response)
+	return buffer.Bytes()
+	//
 }

@@ -86,7 +86,9 @@ func PacketTransferTest() {
 	}
 }
 
-/* 测试PacketSender.go中DNS包的创建*/
+/*
+	测试PacketSender.go中DNS包的创建
+*/
 func SendDNSPacketTest() {
 	_device := flag.String("d", VPN_ADAPTER_NAME, "网络适配器名称")
 	flag.Parse()
@@ -103,14 +105,15 @@ func SendDNSPacketTest() {
 		"66:55:44:33:22:11",
 		"192.166.6.6",
 		"192.188.8.8",
-		60,
 		80,
-		CreateDNSResponse(dns_request_packet))
+		53,
+		CreateDNSResponse(dns_request_packet, "192.222.2.2"))
 
 	// 发送报文
 	SendPacket(device, dns_response_packet)
 
 	// 解析检查发送的报文
+	// (因为 “自己抓取自己发送的包” 在 PacketTransferTest() 中已经测试成功，这里发出的"假"DNS包，只测试能否被解析，而不去测试能否被抓取)
 	mypacket := gopacket.NewPacket(dns_response_packet, layers.LayerTypeEthernet, gopacket.Default)
 	DecodePacket(mypacket).PrintAll()
 }
