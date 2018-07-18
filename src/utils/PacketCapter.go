@@ -22,7 +22,7 @@ const FILTER_UDP_53 string = "udp and port 53"
 const FILTER_ALL string = ""
 
 /*
-	抓取 TCP:80 数据包
+	抓取数据包
 	参数 deviceName: 抓取通过此设备的报文; packetChannel: 将抓取到的报文信息传入此channel; filter: 过滤器
 */
 func GetLivePackets(deviceName string, packetChannel chan PacketInfo, filter string) {

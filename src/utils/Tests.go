@@ -13,16 +13,14 @@ import (
 
 /*------------------------------ 测试 ------------------------------*/
 
-/*
 // LinkRawSocket.go 测试
 func LinkRawSocketTest() {
 	go func() {
-		utils.Sender()
+		Sender()
 
 	}()
-	utils.Receiver()
+	Receiver()
 }
-*/
 
 // DNSServer.go 测试
 func DNSServerTest() {

@@ -3,7 +3,7 @@ package utils
 /*
 	不同操作系统下的syscall库不一样，windows版本无法编译，centOS测试通过
 */
-/*
+
 import (
 	"fmt"
 	"log"
@@ -93,4 +93,3 @@ func csum(b []byte) uint16 {
 	s = s + s>>16
 	return uint16(^s)
 }
-*/
